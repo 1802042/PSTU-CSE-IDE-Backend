@@ -1,12 +1,19 @@
 {
   "name": "ide",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon scr/index.js"
   },
-  "keywords": ["Knightshade", "IDE"],
+  "keywords": [
+    "Knightshade",
+    "IDE"
+  ],
   "author": "Knightshade",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
 }
