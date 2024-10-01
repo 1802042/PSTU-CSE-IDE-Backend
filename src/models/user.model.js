@@ -31,7 +31,6 @@ const userSchema = new Schema(
     },
     avatarUrl: {
       type: String,
-      default: null,
       required: [true, "avatar is required"],
     },
     emailVerified: {

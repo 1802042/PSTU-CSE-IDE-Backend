@@ -8,8 +8,6 @@ const storage = multer.diskStorage({
     const uniquePrefix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     // cb(null, file.fieldname + '-' + uniqueSuffix)
     cb(null, uniquePrefix + "-" + file.originalname);
-
-    console.log(file.originalname, file.fieldname);
   },
 });
 
