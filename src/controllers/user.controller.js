@@ -24,15 +24,11 @@ const registerUser = asyncHandler(async (req, res) => {
   const validationResult = userValidationSchema.safeParse(userData);
 
   if (!validationResult.success) {
-    return res
-      .status(400)
-      .json(
-        new ApiError(
-          400,
-          "All the fields are required",
-          validationResult.error.errors
-        )
-      );
+    throw new ApiError(
+      400,
+      "All the fields are required",
+      validationResult.error.errors
+    );
   }
 
   const validatedUserData = validationResult.data;
@@ -44,23 +40,19 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (userExists) {
-    return res
-      .status(409)
-      .json(new ApiError(409, "user with email or username already exists"));
+    throw new ApiError(409, "user with email or username already exists");
   }
 
   const localFileLocation = req.file?.path;
 
   if (!localFileLocation) {
-    return res.status(409).json(new ApiError(409, "file is required"));
+    throw new ApiError(409, "file is required");
   }
 
   const avatarUrl = await uploadOnCloudinary(localFileLocation);
 
   if (!avatarUrl) {
-    return res
-      .status(500)
-      .json(new ApiError(500, "something went wrong while uploading file"));
+    throw new ApiError(500, "something went wrong while uploading file");
   }
 
   const user = await userModel.create({
@@ -72,9 +64,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    return res
-      .status(500)
-      .json(new ApiError(500, "something went wrong while updating database"));
+    throw new ApiError(500, "something went wrong while updating database");
   }
 
   const createdUser = await userModel
@@ -111,15 +101,11 @@ const loginUser = asyncHandler(async (req, res) => {
   const validationResult = userLoginValidationSchema.safeParse(userData);
 
   if (!validationResult.success) {
-    return res
-      .status(400)
-      .json(
-        new ApiError(
-          400,
-          "All the fields are required",
-          validationResult.error.errors
-        )
-      );
+    throw new ApiError(
+      400,
+      "All the fields are required",
+      validationResult.error.errors
+    );
   }
 
   const validatedUserData = validationResult.data;
@@ -131,9 +117,7 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    return res
-      .status(401)
-      .json(new ApiError(401, "Unauthorized access: User not found"));
+    throw new ApiError(401, "Unauthorized access: User not found");
   }
 
   const checkPassword = await user.isPasswordCorrect(
@@ -141,7 +125,7 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   if (!checkPassword) {
-    return res.status(401).json(new ApiError(401, "Password does not match"));
+    throw new ApiError(401, "Password does not match");
   }
 
   const accessToken = user.generateAccessToken(true);
@@ -171,15 +155,11 @@ const loginUser = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-      new ApiResponse(
-        200,
-        {
-          user: updatedUser,
-          accessToken,
-          refreshToken,
-        },
-        "User login successful"
-      )
+      new ApiResponse(200, "User login successful", {
+        user: updatedUser,
+        accessToken,
+        refreshToken,
+      })
     );
 });
 
