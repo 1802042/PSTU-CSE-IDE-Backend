@@ -4,13 +4,14 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryUpload.js";
 import { userModel } from "../models/user.model.js";
 import userValidationSchema from "../validation/user.validation.js";
+import fs from "fs";
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from req.body ✅
   // validate fields ✅
   // check user exists or not ✅
   // get avatar image file from req.files ✅
-  // updload avatar to cloudinary ✅
+  // updload avatar to cloudinary and delete file✅
   // create user and check wheater user created successfully ✅
   // return user object exluding password and refresh token ✅
 
@@ -21,9 +22,16 @@ const registerUser = asyncHandler(async (req, res) => {
     fullName: req.body.fullName,
   };
 
+  const localFileLocation = req.file?.path;
+
+  if (!localFileLocation) {
+    throw new ApiError(409, "file is required");
+  }
+
   const validationResult = userValidationSchema.safeParse(userData);
 
   if (!validationResult.success) {
+    fs.unlinkSync(localFileLocation); // delete saved file
     throw new ApiError(
       400,
       "All the fields are required",
@@ -40,15 +48,11 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (userExists) {
+    fs.unlinkSync(localFileLocation); // delete saved file
     throw new ApiError(409, "user with email or username already exists");
   }
 
-  const localFileLocation = req.file?.path;
-
-  if (!localFileLocation) {
-    throw new ApiError(409, "file is required");
-  }
-
+  console.log(localFileLocation);
   const avatarUrl = await uploadOnCloudinary(localFileLocation);
 
   if (!avatarUrl) {
