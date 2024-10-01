@@ -79,7 +79,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const createdUser = await userModel
     .findById(user._id)
-    .select("-password -refreshToken");
+    .select(
+      "-password -refreshToken -emailVerificationToken -passwordResetToken"
+    );
 
   console.log(createdUser);
 
@@ -88,4 +90,97 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "user created successfully!"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  // get user details from req.body ✅
+  // validate details ✅
+  // check user exists or not by username and/or email ✅
+  // check password ✅
+  // generate access token and refresh token ✅
+  // return access token and refresh token through cookies ✅
+
+  const userLoginValidationSchema = userValidationSchema.omit({
+    fullName: true,
+  });
+
+  const userData = {
+    username: req.body.username,
+    email: req.body.email,
+    password: req.body.password,
+  };
+
+  const validationResult = userLoginValidationSchema.safeParse(userData);
+
+  if (!validationResult.success) {
+    return res
+      .status(400)
+      .json(
+        new ApiError(
+          400,
+          "All the fields are required",
+          validationResult.error.errors
+        )
+      );
+  }
+
+  const validatedUserData = validationResult.data;
+  const user = await userModel.findOne({
+    $and: [
+      { username: validatedUserData.username },
+      { email: validatedUserData.email },
+    ],
+  });
+
+  if (!user) {
+    return res
+      .status(401)
+      .json(new ApiError(401, "Unauthorized access: User not found"));
+  }
+
+  const checkPassword = await user.isPasswordCorrect(
+    validatedUserData.password
+  );
+
+  if (!checkPassword) {
+    return res.status(401).json(new ApiError(401, "Password does not match"));
+  }
+
+  const accessToken = user.generateAccessToken(true);
+  const refreshToken = user.generateRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save({
+    validateBeforeSave: false,
+  });
+
+  const updatedUser = await userModel
+    .findById(user._id)
+    .select(
+      "-password -refreshToken -emailVerificationToken -passwordResetToken"
+    );
+
+  const options = {
+    httpOnly: true, // Ensures the cookie is sent only over HTTP(S), not client JavaScript
+    secure: true,
+    sameSite: "strict", // Cookie is only sent for same-site requests
+    path: "/", // Set the path for the cookie
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: updatedUser,
+          accessToken,
+          refreshToken,
+        },
+        "User login successful"
+      )
+    );
+});
+
+export { registerUser, loginUser };

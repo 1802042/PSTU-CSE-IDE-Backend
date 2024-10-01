@@ -35,4 +35,6 @@ const userValidationSchema = z.object({
   ),
 });
 
+// const userLoginSchema = userValidationSchema.omit({ fullName: true });
+
 export default userValidationSchema;
