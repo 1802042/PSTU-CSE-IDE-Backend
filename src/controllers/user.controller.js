@@ -52,7 +52,6 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "user with email or username already exists");
   }
 
-  console.log(localFileLocation);
   const avatarUrl = await uploadOnCloudinary(localFileLocation);
 
   if (!avatarUrl) {
@@ -76,8 +75,6 @@ const registerUser = asyncHandler(async (req, res) => {
     .select(
       "-password -refreshToken -emailVerificationToken -passwordResetToken"
     );
-
-  console.log(createdUser);
 
   return res
     .status(200)
@@ -167,4 +164,48 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  // extract user details from req.user ✅
+  // delete refreshToken value from database ✅
+  // delete accesstoken and refreshtoken from cookie
+
+  try {
+    await userModel.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          refreshToken: null,
+        },
+      }
+      // {
+      //   new: true,
+      // }
+    );
+
+    const options = {
+      httpOnly: true, // Ensures the cookie is sent only over HTTP(S), not client JavaScript
+      secure: true,
+      sameSite: "strict", // Cookie is only sent for same-site requests
+      path: "/", // Set the path for the cookie
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    };
+
+    return (
+      res
+        // .clearCookie("accessToken", options)
+        // .clearCookie("refreshToken", options)
+        .status(200)
+        .cookie("accessToken", "", { expires: new Date(0) })
+        .cookie("refreshToken", "", { expires: new Date(0) })
+        .json(new ApiResponse(200, "user logged out successfully"))
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+
+    throw new ApiError(403, "Error when logging out");
+  }
+});
+
+export { registerUser, loginUser, logoutUser };
