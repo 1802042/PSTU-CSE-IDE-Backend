@@ -45,4 +45,51 @@ const verifyAccessToken = asyncHandler(async (req, _, next) => {
   }
 });
 
-export { verifyAccessToken };
+const verifyRefreshToken = asyncHandler(async (req, _, next) => {
+  // extract refreshToken from cookies / body ✅
+  // decode refreshToken to extract id ✅
+  // fetch user from db and compare refreshToken ✅
+  // call next middleware ✅
+
+  try {
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!token) {
+      throw new ApiError(401, "No token provided");
+    }
+
+    const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    if (!decodedToken) {
+      throw new ApiError(401, "Invalid token provided");
+    }
+    const user = await userModel
+      .findById(decodedToken?._id)
+      .select("-password -emailVerificationToken -passwordResetToken");
+
+    if (!user || user?.refreshToken !== token) {
+      throw new ApiError(401, "Invalid token provided");
+    }
+
+    const newUser = await userModel
+      .findById(decodedToken?._id)
+      .select(
+        "-password -refreshToken -emailVerificationToken -passwordResetToken"
+      );
+
+    if (!newUser) {
+      throw new ApiError(401, "Invalid token provided");
+    }
+
+    req.user = newUser;
+
+    next();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+
+    throw new ApiError(401, "Invalid or expired token provided");
+  }
+});
+
+export { verifyAccessToken, verifyRefreshToken };

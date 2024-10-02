@@ -148,7 +148,6 @@ const loginUser = asyncHandler(async (req, res) => {
     secure: true,
     sameSite: "strict", // Cookie is only sent for same-site requests
     path: "/", // Set the path for the cookie
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
   };
 
   return res
@@ -167,7 +166,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
   // extract user details from req.user ✅
   // delete refreshToken value from database ✅
-  // delete accesstoken and refreshtoken from cookie
+  // delete accesstoken and refreshtoken from cookie ✅
 
   try {
     await userModel.findByIdAndUpdate(
@@ -187,18 +186,15 @@ const logoutUser = asyncHandler(async (req, res) => {
       secure: true,
       sameSite: "strict", // Cookie is only sent for same-site requests
       path: "/", // Set the path for the cookie
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     };
 
-    return (
-      res
-        // .clearCookie("accessToken", options)
-        // .clearCookie("refreshToken", options)
-        .status(200)
-        .cookie("accessToken", "", { expires: new Date(0) })
-        .cookie("refreshToken", "", { expires: new Date(0) })
-        .json(new ApiResponse(200, "user logged out successfully"))
-    );
+    // .cookie("accessToken", "", { expires: new Date(0) })
+    // .cookie("refreshToken", "", { expires: new Date(0) })
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json(new ApiResponse(200, "user logged out successfully"));
   } catch (err) {
     if (err instanceof ApiError) {
       throw err;
@@ -208,4 +204,35 @@ const logoutUser = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  // generate accessToken ✅
+  // save cookies ✅
+
+  try {
+    const newAccessToken = await req.user?.generateAccessToken();
+
+    if (!newAccessToken) {
+      throw new ApiError(403, "Error refreshing access token");
+    }
+
+    const options = {
+      httpOnly: true, // Ensures the cookie is sent only over HTTP(S), not client JavaScript
+      secure: true,
+      sameSite: "strict", // Cookie is only sent for same-site requests
+      path: "/", // Set the path for the cookie
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", newAccessToken, options)
+      .json(new ApiResponse(200, "Access token refreshed"));
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+
+    throw new ApiError(403, "Error refreshing access token");
+  }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
