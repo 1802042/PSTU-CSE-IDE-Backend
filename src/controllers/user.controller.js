@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryUpload.js";
 import { userModel } from "../models/user.model.js";
 import userValidationSchema from "../validation/user.validation.js";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import fs from "fs";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -25,7 +26,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const localFileLocation = req.file?.path;
 
   if (!localFileLocation) {
-    throw new ApiError(409, "file is required");
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
   }
 
   const validationResult = userValidationSchema.safeParse(userData);
@@ -33,8 +34,8 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!validationResult.success) {
     fs.unlinkSync(localFileLocation); // delete saved file
     throw new ApiError(
-      400,
-      "All the fields are required",
+      StatusCodes.UNPROCESSABLE_ENTITY,
+      ReasonPhrases.UNPROCESSABLE_ENTITY,
       validationResult.error.errors
     );
   }
@@ -49,13 +50,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (userExists) {
     fs.unlinkSync(localFileLocation); // delete saved file
-    throw new ApiError(409, "user with email or username already exists");
+    throw new ApiError(StatusCodes.CONFLICT, ReasonPhrases.CONFLICT);
   }
 
   const avatarUrl = await uploadOnCloudinary(localFileLocation);
 
   if (!avatarUrl) {
-    throw new ApiError(500, "something went wrong while uploading file");
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
   }
 
   const user = await userModel.create({
@@ -67,7 +71,10 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(500, "something went wrong while updating database");
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
   }
 
   const createdUser = await userModel
@@ -76,9 +83,18 @@ const registerUser = asyncHandler(async (req, res) => {
       "-password -refreshToken -emailVerificationToken -passwordResetToken"
     );
 
+  if (!createdUser) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
+  }
+
   return res
-    .status(200)
-    .json(new ApiResponse(200, createdUser, "user created successfully!"));
+    .status(StatusCodes.CREATED)
+    .json(
+      new ApiResponse(StatusCodes.CREATED, createdUser, ReasonPhrases.CREATED)
+    );
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -103,8 +119,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (!validationResult.success) {
     throw new ApiError(
-      400,
-      "All the fields are required",
+      StatusCodes.UNPROCESSABLE_ENTITY,
+      ReasonPhrases.UNPROCESSABLE_ENTITY,
       validationResult.error.errors
     );
   }
@@ -118,7 +134,7 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(401, "Unauthorized access: User not found");
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
 
   const checkPassword = await user.isPasswordCorrect(
@@ -126,7 +142,7 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   if (!checkPassword) {
-    throw new ApiError(401, "Password does not match");
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
 
   const accessToken = user.generateAccessToken(true);
@@ -151,11 +167,11 @@ const loginUser = asyncHandler(async (req, res) => {
   };
 
   return res
-    .status(200)
+    .status(StatusCodes.OK)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-      new ApiResponse(200, "User login successful", {
+      new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, {
         user: updatedUser,
         accessToken,
         refreshToken,
@@ -191,16 +207,19 @@ const logoutUser = asyncHandler(async (req, res) => {
     // .cookie("accessToken", "", { expires: new Date(0) })
     // .cookie("refreshToken", "", { expires: new Date(0) })
     return res
-      .status(200)
+      .status(StatusCodes.NO_CONTENT)
       .clearCookie("accessToken", options)
       .clearCookie("refreshToken", options)
-      .json(new ApiResponse(200, "user logged out successfully"));
+      .json(new ApiResponse(StatusCodes.NO_CONTENT, ReasonPhrases.NO_CONTENT));
   } catch (err) {
     if (err instanceof ApiError) {
       throw err;
     }
 
-    throw new ApiError(403, "Error when logging out");
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
   }
 });
 
@@ -212,7 +231,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const newAccessToken = await req.user?.generateAccessToken();
 
     if (!newAccessToken) {
-      throw new ApiError(403, "Error refreshing access token");
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR
+      );
     }
 
     const options = {
@@ -223,15 +245,18 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     };
 
     return res
-      .status(200)
+      .status(StatusCodes.NO_CONTENT)
       .cookie("accessToken", newAccessToken, options)
-      .json(new ApiResponse(200, "Access token refreshed"));
+      .json(new ApiResponse(StatusCodes.NO_CONTENT, ReasonPhrases.NO_CONTENT));
   } catch (err) {
     if (err instanceof ApiError) {
       throw err;
     }
 
-    throw new ApiError(403, "Error refreshing access token");
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 });
 

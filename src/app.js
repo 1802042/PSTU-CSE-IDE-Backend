@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 const app = express();
 
@@ -37,9 +38,9 @@ app.use((err, req, res, next) => {
 
   console.log(err);
   // Handle other types of errors
-  return res.status(500).json({
-    status: 500,
-    message: "Internal Server Error",
+  return res.status().json({
+    status: StatusCodes.INTERNAL_SERVER_ERROR,
+    message: ReasonPhrases.INTERNAL_SERVER_ERROR,
     errors: err.errors,
   });
 });

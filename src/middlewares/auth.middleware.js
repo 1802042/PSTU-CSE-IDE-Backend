@@ -15,12 +15,12 @@ const verifyAccessToken = asyncHandler(async (req, _, next) => {
       req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-      throw new ApiError(401, "No token provided!!");
+      throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     if (!decodedToken) {
-      throw new ApiError(401, "Invalid token provided");
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
     }
     const user = await userModel
       .findById(decodedToken?._id)
@@ -29,7 +29,7 @@ const verifyAccessToken = asyncHandler(async (req, _, next) => {
       );
 
     if (!user) {
-      throw new ApiError(401, "Invalid token provided");
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
     }
 
     req.user = user;
@@ -40,8 +40,7 @@ const verifyAccessToken = asyncHandler(async (req, _, next) => {
     if (err instanceof ApiError) {
       throw err;
     }
-
-    throw new ApiError(401, "Token expired");
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
 });
 
@@ -55,19 +54,19 @@ const verifyRefreshToken = asyncHandler(async (req, _, next) => {
     const token = req.cookies?.refreshToken || req.body?.refreshToken;
 
     if (!token) {
-      throw new ApiError(401, "No token provided");
+      throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
     }
 
     const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
     if (!decodedToken) {
-      throw new ApiError(401, "Invalid token provided");
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
     }
     const user = await userModel
       .findById(decodedToken?._id)
       .select("-password -emailVerificationToken -passwordResetToken");
 
     if (!user || user?.refreshToken !== token) {
-      throw new ApiError(401, "Invalid token provided");
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
     }
 
     const newUser = await userModel
@@ -77,7 +76,7 @@ const verifyRefreshToken = asyncHandler(async (req, _, next) => {
       );
 
     if (!newUser) {
-      throw new ApiError(401, "Invalid token provided");
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
     }
 
     req.user = newUser;
@@ -87,8 +86,7 @@ const verifyRefreshToken = asyncHandler(async (req, _, next) => {
     if (err instanceof ApiError) {
       throw err;
     }
-
-    throw new ApiError(401, "Invalid or expired token provided");
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
 });
 
