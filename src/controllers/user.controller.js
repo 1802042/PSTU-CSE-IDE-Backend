@@ -93,7 +93,7 @@ const registerUser = asyncHandler(async (req, res) => {
   return res
     .status(StatusCodes.CREATED)
     .json(
-      new ApiResponse(StatusCodes.CREATED, createdUser, ReasonPhrases.CREATED)
+      new ApiResponse(StatusCodes.CREATED, ReasonPhrases.CREATED, createdUser)
     );
 });
 
@@ -260,4 +260,65 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const resetPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+  const passwordValidationSchema = userValidationSchema.omit({
+    username: true,
+    fullName: true,
+    email: true,
+  });
+
+  const validatedOldPassword = passwordValidationSchema.safeParse({
+    password: oldPassword,
+  });
+
+  if (!validatedOldPassword) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+
+  const validatedNewPassword = passwordValidationSchema.safeParse({
+    password: newPassword,
+  });
+
+  if (!validatedNewPassword) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+
+  const userID = req.user?._id;
+  if (!userID) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+  const user = await userModel.findById(userID);
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+  const isPasswordCorrect = await user.isPasswordCorrect(
+    validatedOldPassword.data.password
+  );
+  if (!isPasswordCorrect) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+  }
+  user.password = validatedNewPassword.data.password;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(StatusCodes.NO_CONTENT)
+    .json(new ApiResponse(StatusCodes.NO_CONTENT, ReasonPhrases.NO_CONTENT));
+});
+
+const getCurrentUser = asyncHandler((req, res) => {
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, req.user));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  resetPassword,
+  getCurrentUser,
+};
