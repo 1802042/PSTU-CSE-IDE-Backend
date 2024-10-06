@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -5,7 +6,13 @@ import { uploadOnCloudinary } from "../utils/cloudinaryUpload.js";
 import { userModel } from "../models/user.model.js";
 import userValidationSchema from "../validation/user.validation.js";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import sendVerificationEmail from "../utils/sendVerificationEmail.js";
 import fs from "fs";
+import jwt from "jsonwebtoken";
+
+dotenv.config({
+  path: "../../.env",
+});
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from req.body ✅
@@ -62,12 +69,17 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
+  const emailVerificationToken = await sendVerificationEmail(
+    validatedUserData.email
+  );
+
   const user = await userModel.create({
     username: validatedUserData.username,
     email: validatedUserData.email,
     password: validatedUserData.password,
     fullName: validatedUserData.fullName,
     avatarUrl,
+    emailVerificationToken,
   });
 
   if (!user) {
@@ -137,6 +149,10 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
 
+  if (!user.emailVerified) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Email not verified");
+  }
+
   const checkPassword = await user.isPasswordCorrect(
     validatedUserData.password
   );
@@ -149,6 +165,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const refreshToken = user.generateRefreshToken();
 
   user.refreshToken = refreshToken;
+
   await user.save({
     validateBeforeSave: false,
   });
@@ -314,6 +331,43 @@ const getCurrentUser = asyncHandler((req, res) => {
     .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, req.user));
 });
 
+const emailVerification = asyncHandler(async (req, res) => {
+  // extract emailVerificationToken from url params ✅
+  // fetch user from db and compare emailVerificationToken ✅
+  // update db ✅
+
+  try {
+    const token = req.params?.token;
+    if (!token) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+    }
+
+    const decodedToken = jwt.verify(token, process.env.EMAIL_JWT_SECRET);
+    if (!decodedToken) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+    }
+
+    const user = await userModel.findOneAndUpdate(
+      { email: decodedToken?.email, emailVerificationToken: token },
+      { emailVerified: true, emailVerificationToken: null },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+    }
+
+    return res
+      .status(StatusCodes.NO_CONTENT)
+      .json(new ApiResponse(StatusCodes.NO_CONTENT, ReasonPhrases.NO_CONTENT));
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+  }
+});
+
 export {
   registerUser,
   loginUser,
@@ -321,4 +375,5 @@ export {
   refreshAccessToken,
   resetPassword,
   getCurrentUser,
+  emailVerification,
 };

@@ -15,6 +15,7 @@
   "description": "",
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/nodemailer": "^6.4.16",
     "nodemon": "^3.1.7",
     "prettier": "^3.3.3"
   },
@@ -25,10 +26,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "googleapis": "^144.0.0",
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.7.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15",
     "zod": "^3.23.8"
   }
 }

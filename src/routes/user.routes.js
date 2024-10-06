@@ -6,6 +6,7 @@ import {
   refreshAccessToken,
   resetPassword,
   getCurrentUser,
+  emailVerification,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import {
@@ -17,6 +18,7 @@ const router = Router();
 
 router.route("/register").post(upload.single("avatar"), registerUser);
 router.route("/login").post(loginUser);
+router.route("/verify-email/:token").get(emailVerification);
 //generate access token
 router.route("/refresh-token").post(verifyRefreshToken, refreshAccessToken);
 // secured routes
