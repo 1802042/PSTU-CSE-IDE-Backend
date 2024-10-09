@@ -7,6 +7,7 @@ import { userModel } from "../models/user.model.js";
 import userValidationSchema from "../validation/user.validation.js";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import sendVerificationEmail from "../utils/sendVerificationEmail.js";
+import { sendEmail } from "../utils/sendEmail.js";
 import fs from "fs";
 import jwt from "jsonwebtoken";
 
@@ -69,9 +70,11 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  const emailVerificationToken = await sendVerificationEmail(
-    validatedUserData.email
-  );
+  // const emailVerificationToken = await sendVerificationEmail(
+  //   validatedUserData.email
+  // );
+
+  sendEmail(validatedUserData.email);
 
   const user = await userModel.create({
     username: validatedUserData.username,
@@ -79,7 +82,7 @@ const registerUser = asyncHandler(async (req, res) => {
     password: validatedUserData.password,
     fullName: validatedUserData.fullName,
     avatarUrl,
-    emailVerificationToken,
+    // emailVerificationToken,
   });
 
   if (!user) {
