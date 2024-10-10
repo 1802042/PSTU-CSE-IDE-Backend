@@ -41,15 +41,11 @@ Before you start, ensure you have the following installed:
    Or run with docker image.
 
    ```bash
-   docker run -itd -p 6379:6379 redis
+   docker run -d --name redis-email-server -p 6379:6379 redis redis-server --requirepass your_redis_password
    ```
 
 2. **Start MongoDB instance:**  
-   Make sure MongoDB is running. You can start it with:
-
-   ```bash
-   mongod
-   ```
+   Make sure MongoDB is running. You can start it locally or use free cloud services.
 
 3. **Configure environment variables:**  
    Create and configure the `.env` file based on `.env.example`:
