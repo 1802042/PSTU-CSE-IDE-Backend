@@ -22,6 +22,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // get avatar image file from req.files ✅
   // updload avatar to cloudinary and delete file✅
   // create user and check wheater user created successfully ✅
+  // put email in queue for sending verification email ✅
   // return user object exluding password and refresh token ✅
 
   const userData = {
