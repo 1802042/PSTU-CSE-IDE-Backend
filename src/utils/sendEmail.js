@@ -13,6 +13,7 @@ dotenv.config({
 const connection = {
   host: process.env.REDIS_HOST, // Replace with your Redis server host
   port: process.env.REDIS_PORT, // Replace with your Redis server port
+  password: process.env.REDIS_PASSWORD, // Replace with your Redis server password
 };
 
 let queue;
@@ -22,8 +23,8 @@ try {
 } catch (error) {
   throw new ApiError(
     StatusCodes.INTERNAL_SERVER_ERROR,
-    ReasonPhrases.INTERNAL_SERVER_ERROR,
-    error.message
+    ReasonPhrases.INTERNAL_SERVER_ERROR
+    // error.message
   );
 }
 
@@ -33,8 +34,8 @@ const sendEmail = async (email) => {
   } catch (error) {
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
-      ReasonPhrases.INTERNAL_SERVER_ERROR,
-      error.message
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+      // error.message
     );
   }
 };
@@ -51,8 +52,8 @@ try {
       if (!emailVerificationToken) {
         throw new ApiError(
           StatusCodes.INTERNAL_SERVER_ERROR,
-          ReasonPhrases.INTERNAL_SERVER_ERROR,
-          error.message
+          ReasonPhrases.INTERNAL_SERVER_ERROR
+          // error.message
         );
       }
 
@@ -69,8 +70,8 @@ try {
     if (!user) {
       throw new ApiError(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR,
-        error.message
+        ReasonPhrases.INTERNAL_SERVER_ERROR
+        // error.message
       );
     }
 
@@ -81,15 +82,15 @@ try {
   worker.on("failed", (job, err) => {
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
-      ReasonPhrases.INTERNAL_SERVER_ERROR,
-      err.message
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+      // err.message
     );
   });
 } catch (error) {
   throw new ApiError(
     StatusCodes.INTERNAL_SERVER_ERROR,
-    ReasonPhrases.INTERNAL_SERVER_ERROR,
-    error.message
+    ReasonPhrases.INTERNAL_SERVER_ERROR
+    // error.message
   );
 }
 
