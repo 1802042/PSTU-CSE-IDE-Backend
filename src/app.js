@@ -21,10 +21,12 @@ app.use(cookieParser());
 
 // routes import
 import userRouter from "./routes/user.routes.js";
+import submissionRouter from "./routes/submission.routes.js";
 import { ApiError } from "./utils/ApiError.js";
 
 // routes declaration
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/submissions", submissionRouter);
 
 // Custom error-handling middleware
 app.use((err, req, res, next) => {

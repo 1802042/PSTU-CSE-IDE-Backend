@@ -53,7 +53,6 @@ try {
         throw new ApiError(
           StatusCodes.INTERNAL_SERVER_ERROR,
           ReasonPhrases.INTERNAL_SERVER_ERROR
-          // error.message
         );
       }
 

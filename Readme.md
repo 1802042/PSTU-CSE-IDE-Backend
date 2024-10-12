@@ -13,6 +13,8 @@ Before you start, ensure you have the following installed:
 - **Node.js**
 - **Redis**
 - **MongoDB**
+- **Docker**
+- **Docker Compose**
 
 ### Installation
 
@@ -47,7 +49,19 @@ Before you start, ensure you have the following installed:
 2. **Start MongoDB instance:**  
    Make sure MongoDB is running. You can start it locally or use free cloud services.
 
-3. **Configure environment variables:**  
+3. **Start Code Execution Engine**
+
+   Update jude0.conf file then run following commands
+
+   ```bash
+   cd CEE
+   sudo docker compose up -d db redis
+   sleep 10s
+   sudo docker compose up -d
+   sleep 5s
+   ```
+
+4. **Configure environment variables:**  
    Create and configure the `.env` file based on `.env.example`:
 
    ```bash

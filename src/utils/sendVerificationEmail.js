@@ -37,54 +37,39 @@ const sendVerificationEmail = async (email) => {
       expiresIn: "10m",
     });
 
-    // const mailConfigurations = {
-    //   from: process.env.EMAIL_USERNAME,
-    //   to: email,
-    //   subject: "Email Verification",
-    //   text: `
-    //   hello,
-    //   You are receiving this email because you have created an account on Knightshade Online Judge.
-
-    //   Please follow the given link to verify your email
-    //   http://localhost:8000/api/v1/users/verify-email/${token}
-
-    //   Knightshade Online Judge`,
-    //   // html: "<b>This is a test email using Nodemailer.</b>",
-    // };
-
     const mailConfigurations = {
       from: process.env.EMAIL_USERNAME,
       to: email,
       subject: "Confirm Your Email Address for KnightShade IDE",
 
       text: `
-  
-  Hello!
-  
-  Welcome to KnightShade IDE! We're thrilled to have you on board. To complete your registration and get started, please verify your email address by clicking the link below:
-
-  http://localhost:8000/api/v1/users/verify-email/${token} 
-
-  This link will expire in 24 hours, so be sure to verify your email as soon as possible. If you did not create an account with us, please disregard this email.
-
-  If you have any questions or need assistance, feel free to reach out to our support team at support@knightshade.ide.
-
-  Thank you for choosing KnightShade IDE – your journey to seamless coding starts now!
-
-  Best regards,  
-  The KnightShade IDE Team
-
-  Website: www.knightshade.me  
-  Support: rony16@cse.pstu.ac.bd`,
+      
+      Hello!
+      
+      Welcome to KnightShade IDE! We're thrilled to have you on board. To complete your registration and get started, please verify your email address by clicking the link below:
+      
+      http://localhost:8000/api/v1/users/verify-email/${token} 
+      
+      This link will expire in 24 hours, so be sure to verify your email as soon as possible. If you did not create an account with us, please disregard this email.
+      
+      If you have any questions or need assistance, feel free to reach out to our support team at support@knightshade.ide.
+      
+      Thank you for choosing KnightShade IDE – your journey to seamless coding starts now!
+      
+      Best regards,  
+      The KnightShade IDE Team
+      
+      Website: www.knightshade.me  
+      Support: rony16@cse.pstu.ac.bd`,
     };
 
     await transporter.sendMail(mailConfigurations);
     return token;
   } catch (error) {
     throw new ApiError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      ReasonPhrases.INTERNAL_SERVER_ERROR,
-      error
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
+      error.error
     );
   }
 };
