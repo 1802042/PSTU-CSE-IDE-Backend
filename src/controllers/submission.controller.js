@@ -128,8 +128,12 @@ const fetchSubmissionResult = async (submission) => {
       }
     }, 1500);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(intervalId);
+      if (submission.status === "Processing") {
+        submission.status = "Error";
+        await submission.save();
+      }
     }, 11000);
   } catch (error) {
     throw new ApiError(
@@ -140,4 +144,16 @@ const fetchSubmissionResult = async (submission) => {
   }
 };
 
-export { submitCode };
+const getResult = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const submission = await submissionModel.findById(submissionId);
+  if (!submission) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submission));
+});
+
+export { submitCode, getResult };

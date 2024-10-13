@@ -11,7 +11,7 @@ const submissionSchema = new Schema(
     },
     status: {
       type: String,
-      default: "Pending",
+      default: "Processing",
     },
     sourceCode: {
       type: String,
