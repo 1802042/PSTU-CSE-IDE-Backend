@@ -11,16 +11,34 @@ dotenv.config({
   path: "../../.env",
 });
 
+const resultStatus = {
+  queue: { id: 1, name: "In Queue" },
+  process: { id: 2, name: "Processing" },
+  ac: { id: 3, name: "Accepted" },
+  wa: { id: 4, name: "Wrong Answer" },
+  tle: { id: 5, name: "Time Limit Exceeded" },
+  ce: { id: 6, name: "Compilation Error" },
+  sigsegv: { id: 7, name: "Runtime Error (SIGSEGV)" },
+  sigxfsz: { id: 8, name: "Runtime Error (SIGXFSZ)" },
+  sigfpe: { id: 9, name: "Runtime Error (SIGFPE)" },
+  sigabrt: { id: 10, name: "Runtime Error (SIGABRT)" },
+  nzec: { id: 11, name: "Runtime Error (NZEC)" },
+  other: { id: 12, name: "Runtime Error (Other)" },
+  boxerr: { id: 13, name: "Internal Error" },
+  exeerr: { id: 14, name: "Exec Format Error" },
+};
+
 const submitCode = asyncHandler(async (req, res) => {
   // get the submission data from the request body ✅
   // validate the submission data ✅
   // get the user id from the req.user object ✅
   // enqueue the submission to the queue and get back a job token ✅
   // save the submission to the database ✅
+  // fetch the submission result using the job token and update database ✅
   // return the submission data ✅
 
   const data = {
-    code: req.body.code,
+    sourceCode: req.body.sourceCode,
     languageId: req.body.languageId,
   };
 
@@ -33,13 +51,13 @@ const submitCode = asyncHandler(async (req, res) => {
     );
   }
 
-  // enqueue the submission to the queue and get back a job token
+  // sourceCode, languageId, stdin, timeLimit, memoryLimit
   const queueData = {
-    source_code: validatedData.data.code,
+    source_code: validatedData.data.sourceCode,
     language_id: validatedData.data.languageId,
     stdin: req.body?.stdin || "",
-    cpu_time_limit: req.body?.cpuTime || null,
-    memory_limit: req.body?.memory || null,
+    cpu_time_limit: req.body?.timeLimit || null,
+    memory_limit: req.body?.memoryLimit || null,
   };
 
   const headerToken = process.env.CEE_AUTH_Token;
@@ -59,6 +77,7 @@ const submitCode = asyncHandler(async (req, res) => {
     userId: req.user._id,
     ...validatedData.data,
     token: jobToken,
+    stdin: req.body?.stdin || "",
   };
 
   const submission = await submissionModel.create(submissionData);
@@ -69,11 +88,56 @@ const submitCode = asyncHandler(async (req, res) => {
     );
   }
 
+  fetchSubmissionResult(submission);
+
   return res
     .status(StatusCodes.CREATED)
     .json(
       new ApiResponse(StatusCodes.CREATED, ReasonPhrases.CREATED, submission)
     );
 });
+
+// Function to fetch submission result
+const fetchSubmissionResult = async (submission) => {
+  try {
+    const headerToken = process.env.CEE_AUTH_Token;
+    const intervalId = setInterval(async () => {
+      const response = await axios.get(
+        `${process.env.CEE_URL}/submissions/${submission.token}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": headerToken,
+          },
+        }
+      );
+
+      const result = response.data;
+
+      // Stop checking if the submission is no longer pending
+      if (result.status?.id > 2) {
+        clearInterval(intervalId);
+
+        submission.status = result.status?.description;
+        submission.memory = result.memory;
+        submission.cpu = result.time;
+        submission.stdout = result.stdout;
+        submission.stderr = result.stderr;
+
+        await submission.save();
+      }
+    }, 1500);
+
+    setTimeout(() => {
+      clearInterval(intervalId);
+    }, 11000);
+  } catch (error) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR,
+      error
+    );
+  }
+};
 
 export { submitCode };

@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { userModel } from "./user.model.js";
+import { string } from "zod";
 
 const submissionSchema = new Schema(
   {
@@ -10,16 +11,14 @@ const submissionSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "judging", "completed", "failed"],
-      default: "pending",
+      default: "Pending",
     },
-    code: {
+    sourceCode: {
       type: String,
       required: true,
     },
     languageId: {
       type: Number,
-      enum: [1, 2, 3, 50], // Define allowed integer values for languageId
       required: true,
     },
     token: {
@@ -42,9 +41,9 @@ const submissionSchema = new Schema(
       type: Number, // Memory used in KB
       default: 0,
     },
-    cpuTime: {
-      type: Number, // CPU time used in milli-seconds
-      default: 0,
+    cpu: {
+      type: String, // CPU time used in MS
+      default: "0",
     },
   },
   {
