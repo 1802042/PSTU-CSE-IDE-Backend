@@ -56,6 +56,7 @@ const submitCode = asyncHandler(async (req, res) => {
     source_code: validatedData.data.sourceCode,
     language_id: validatedData.data.languageId,
     stdin: req.body?.stdin || "",
+    expected_output: req.body?.testCase || null,
     cpu_time_limit: req.body?.timeLimit || null,
     memory_limit: req.body?.memoryLimit || null,
   };

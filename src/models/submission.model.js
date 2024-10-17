@@ -29,6 +29,10 @@ const submissionSchema = new Schema(
       type: String,
       default: "",
     },
+    testCase: {
+      type: String,
+      default: null,
+    },
     stdout: {
       type: String,
       default: "",

@@ -71,10 +71,6 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  // const emailVerificationToken = await sendVerificationEmail(
-  //   validatedUserData.email
-  // );
-
   sendEmail(validatedUserData.email);
 
   const user = await userModel.create({
@@ -154,7 +150,8 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   if (!user.emailVerified) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, "Email not verified");
+    sendEmail(validatedUserData.email);
+    throw new ApiError(StatusCodes.FORBIDDEN, StatusCodes.FORBIDDEN);
   }
 
   const checkPassword = await user.isPasswordCorrect(
