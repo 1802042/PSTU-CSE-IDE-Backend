@@ -14,7 +14,7 @@ app.use(
 );
 
 app.use(ipRateLimiter);
-app.use(express.json({ limit: "16kb" }));
+app.use(express.json({ limit: "64kb" }));
 app.use(express.urlencoded({ limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
@@ -33,6 +33,15 @@ app.use((err, req, res, next) => {
   // Check if the error is an instance of ApiError
   if (err instanceof ApiError) {
     return res.status(err.status).json({
+      status: err.status,
+      success: err.success,
+      message: err.message,
+      errors: err.errors,
+    });
+  }
+
+  if (err.status == 413 || err.type === "entity.too.large") {
+    return res.status(StatusCodes.REQUEST_TOO_LONG).json({
       status: err.status,
       success: err.success,
       message: err.message,

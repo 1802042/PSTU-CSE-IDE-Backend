@@ -43,8 +43,8 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!validationResult.success) {
     fs.unlinkSync(localFileLocation); // delete saved file
     throw new ApiError(
-      StatusCodes.UNPROCESSABLE_ENTITY,
-      ReasonPhrases.UNPROCESSABLE_ENTITY,
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
       validationResult.error.errors
     );
   }
