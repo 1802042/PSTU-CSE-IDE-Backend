@@ -13,10 +13,13 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "../middlewares/auth.middleware.js";
+import { multerErrorHandler } from "../middlewares/multerErrors.middleware.js";
 
 const router = Router();
 router.route("/login").post(loginUser);
-router.route("/register").post(upload.single("avatar"), registerUser);
+router
+  .route("/register")
+  .post(upload.single("avatar"), registerUser, multerErrorHandler);
 
 router.route("/verify-email/:token").get(emailVerification);
 
