@@ -131,8 +131,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (!validationResult.success) {
     throw new ApiError(
-      StatusCodes.UNPROCESSABLE_ENTITY,
-      ReasonPhrases.UNPROCESSABLE_ENTITY,
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
       validationResult.error.errors
     );
   }
