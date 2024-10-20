@@ -157,4 +157,36 @@ const getResult = asyncHandler(async (req, res) => {
     .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submission));
 });
 
-export { submitCode, getResult };
+const getSubmissions = asyncHandler(async (req, res) => {
+  const { page, count } = req.query;
+  const parsedPage = parseInt(page, 10);
+  const parsedCount = parseInt(count, 10);
+
+  if (isNaN(parsedPage) || isNaN(parsedCount)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+
+  let skip = parsedPage - 1;
+  const limit = parsedCount;
+
+  if (skip < 0 || limit <= 0 || limit > 100) {
+    skip = 0;
+  }
+
+  skip = skip * limit;
+
+  const submissions = await submissionModel
+    .find({ userId: req.user?._id })
+    .skip(skip)
+    .limit(limit);
+
+  if (!submissions) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submissions));
+});
+
+export { submitCode, getResult, getSubmissions };
