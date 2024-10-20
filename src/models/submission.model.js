@@ -19,6 +19,7 @@ const submissionSchema = new Schema(
     },
     languageId: {
       type: Number,
+      enum: [50, 54, 62, 63, 71],
       required: true,
     },
     token: {

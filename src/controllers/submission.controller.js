@@ -181,7 +181,10 @@ const getSubmissions = asyncHandler(async (req, res) => {
     .limit(limit);
 
   if (!submissions) {
-    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
   }
 
   return res
