@@ -59,6 +59,7 @@ const submitCode = asyncHandler(async (req, res) => {
     expected_output: req.body?.testCase || null,
     cpu_time_limit: req.body?.timeLimit || null,
     memory_limit: req.body?.memoryLimit || null,
+    redirect_stderr_to_stdout: true,
   };
 
   const headerToken = process.env.CEE_AUTH_Token;
