@@ -32,7 +32,7 @@ const submissionSchema = new Schema(
     },
     testCase: {
       type: String,
-      default: null,
+      default: "",
     },
     stdout: {
       type: String,

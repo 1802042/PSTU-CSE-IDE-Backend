@@ -56,7 +56,7 @@ const submitCode = asyncHandler(async (req, res) => {
     source_code: validatedData.data.sourceCode,
     language_id: validatedData.data.languageId,
     stdin: req.body?.stdin || "",
-    expected_output: req.body?.testCase || null,
+    expected_output: req.body?.expected || "",
     cpu_time_limit: req.body?.timeLimit || null,
     memory_limit: req.body?.memoryLimit || null,
     redirect_stderr_to_stdout: true,
@@ -64,7 +64,7 @@ const submitCode = asyncHandler(async (req, res) => {
 
   const headerToken = process.env.CEE_AUTH_Token;
   const response = await axios.post(
-    process.env.CEE_URL + "/submissions",
+    process.env.CEE_URL + "/submissions?base64_encoded=false&wait=false",
     queueData,
     {
       headers: {
