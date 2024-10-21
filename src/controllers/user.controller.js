@@ -247,7 +247,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   try {
     const newAccessToken = await req.user?.generateAccessToken();
-
     if (!newAccessToken) {
       throw new ApiError(
         StatusCodes.INTERNAL_SERVER_ERROR,
@@ -261,11 +260,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       sameSite: "strict", // Cookie is only sent for same-site requests
       path: "/", // Set the path for the cookie
     };
-
+    const responseData = {
+      accessToken: newAccessToken,
+    };
     return res
-      .status(StatusCodes.NO_CONTENT)
+      .status(StatusCodes.OK)
       .cookie("accessToken", newAccessToken, options)
-      .json(new ApiResponse(StatusCodes.NO_CONTENT, ReasonPhrases.NO_CONTENT));
+      .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, responseData));
   } catch (err) {
     if (err instanceof ApiError) {
       throw err;

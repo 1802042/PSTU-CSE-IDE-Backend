@@ -23,7 +23,7 @@ router
 
 router.route("/verify-email/:token").get(emailVerification);
 
-router.route("/refresh-token").post(verifyRefreshToken, refreshAccessToken);
+router.route("/refresh-token").get(verifyRefreshToken, refreshAccessToken);
 
 // secured routes
 router.route("/logout").post(verifyAccessToken, logoutUser);
