@@ -28,6 +28,14 @@ const resultStatus = {
   exeerr: { id: 14, name: "Exec Format Error" },
 };
 
+const encodeBase64 = (data) => {
+  return data ? Buffer.from(data).toString("base64") : "";
+};
+
+const decodeBase64 = (data) => {
+  return data ? Buffer.from(data, "base64").toString("utf-8") : "";
+};
+
 const submitCode = asyncHandler(async (req, res) => {
   // get the submission data from the request body ✅
   // validate the submission data ✅
@@ -60,16 +68,25 @@ const submitCode = asyncHandler(async (req, res) => {
     cpu_time_limit: req.body?.timeLimit || null,
     memory_limit: req.body?.memoryLimit || null,
     redirect_stderr_to_stdout: true,
+    cpu_time_limit: "10.0",
   };
+
+  queueData.source_code = encodeBase64(queueData.source_code);
+  queueData.stdin = encodeBase64(queueData.stdin);
+  queueData.expected_output = encodeBase64(queueData.expected_output);
 
   const headerToken = process.env.CEE_AUTH_Token;
   const response = await axios.post(
-    process.env.CEE_URL + "/submissions?base64_encoded=false&wait=false",
+    process.env.CEE_URL + "/submissions",
     queueData,
     {
       headers: {
         "Content-Type": "application/json",
         "X-Auth-Token": headerToken,
+      },
+      params: {
+        base64_encoded: true,
+        wait: false,
       },
     }
   );
@@ -80,6 +97,7 @@ const submitCode = asyncHandler(async (req, res) => {
     ...validatedData.data,
     token: jobToken,
     stdin: req.body?.stdin || "",
+    expected: req.body?.expected || "",
   };
 
   const submission = await submissionModel.create(submissionData);
@@ -111,6 +129,10 @@ const fetchSubmissionResult = async (submission) => {
             "Content-Type": "application/json",
             "X-Auth-Token": headerToken,
           },
+          params: {
+            base64_encoded: true,
+            wait: false,
+          },
         }
       );
 
@@ -120,12 +142,17 @@ const fetchSubmissionResult = async (submission) => {
       if (result.status?.id > 2) {
         clearInterval(intervalId);
 
-        submission.status = result.status?.description;
-        submission.memory = result.memory;
-        submission.cpu = result.time;
-        submission.stdout = result.stdout;
-        submission.stderr = result.stderr;
+        submission.status = result?.status?.description || "";
+        submission.memory = result?.memory || "";
+        submission.cpu = result?.time || "";
+        submission.stdout = result?.stdout || "";
+        submission.stderr = result?.stderr || "";
+        submission.compile = result?.compile_output || "";
+        submission.statusId = result?.status?.id || "";
 
+        submission.stdout = decodeBase64(submission.stdout);
+        submission.stderr = decodeBase64(submission.stderr);
+        submission.compile = decodeBase64(submission.compile);
         await submission.save();
       }
     }, 1500);
@@ -133,10 +160,11 @@ const fetchSubmissionResult = async (submission) => {
     setTimeout(async () => {
       clearInterval(intervalId);
       if (submission.status === "Processing") {
-        submission.status = "Error";
+        submission.status = "Time Limit Exceeded";
+        submission.statusId = "5";
         await submission.save();
       }
-    }, 11000);
+    }, 15000);
   } catch (error) {
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,

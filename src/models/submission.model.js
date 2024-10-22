@@ -13,6 +13,10 @@ const submissionSchema = new Schema(
       type: String,
       default: "Processing",
     },
+    statusId: {
+      type: String,
+      default: "1",
+    },
     sourceCode: {
       type: String,
       required: true,
@@ -30,7 +34,7 @@ const submissionSchema = new Schema(
       type: String,
       default: "",
     },
-    testCase: {
+    expected: {
       type: String,
       default: "",
     },
@@ -42,13 +46,21 @@ const submissionSchema = new Schema(
       type: String,
       default: "",
     },
+    compile: {
+      type: String,
+      default: "",
+    },
     memory: {
-      type: Number, // Memory used in KB
-      default: 0,
+      type: String, // Memory used in KB
+      default: "0",
     },
     cpu: {
       type: String, // CPU time used in MS
       default: "0",
+    },
+    share: {
+      type: String, // CPU time used in MS
+      default: "private",
     },
   },
   {
