@@ -255,12 +255,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const options = {
-      httpOnly: true, // Ensures the cookie is sent only over HTTP(S), not client JavaScript
+      httpOnly: true,
       secure: true,
-      sameSite: "strict", // Cookie is only sent for same-site requests
-      path: "/", // Set the path for the cookie
+      sameSite: "strict",
+      path: "/",
     };
+
     const responseData = {
+      ...req.user?._doc,
       accessToken: newAccessToken,
     };
     return res

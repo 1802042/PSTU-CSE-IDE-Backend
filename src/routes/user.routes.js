@@ -26,7 +26,7 @@ router.route("/verify-email/:token").get(emailVerification);
 router.route("/refresh-token").get(verifyRefreshToken, refreshAccessToken);
 
 // secured routes
-router.route("/logout").post(verifyAccessToken, logoutUser);
+router.route("/logout").get(verifyAccessToken, logoutUser);
 router.route("/reset-password").post(verifyAccessToken, resetPassword);
 router.route("/user").get(verifyAccessToken, getCurrentUser);
 
