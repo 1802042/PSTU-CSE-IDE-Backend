@@ -100,16 +100,7 @@ sleep 5s
 cp .env.example .env
 ```
 
-Update the `.env` file with your configuration:
-```env
-PORT=5000
-MONGODB_URI=mongodb://username:password@localhost:27017/ide
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
-JWT_SECRET=your_jwt_secret
-# Add other necessary environment variables
-```
+Update the `.env` file with your configuration
 
 ## 🚀 Running the Server
 
