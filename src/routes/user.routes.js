@@ -22,7 +22,6 @@ router
   .post(upload.single("avatar"), registerUser, multerErrorHandler);
 
 router.route("/verify-email/:token").get(emailVerification);
-
 router.route("/refresh-token").get(verifyRefreshToken, refreshAccessToken);
 
 // secured routes
