@@ -9,6 +9,10 @@ const submissionSchema = new Schema(
       ref: "userModel", // Refers to the user model
       required: true,
     },
+    username: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       default: "Processing",

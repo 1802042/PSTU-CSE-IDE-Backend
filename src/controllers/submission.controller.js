@@ -2,10 +2,12 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { submissionModel } from "../models/submission.model.js";
+import { userModel } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import submissionSchema from "../validation/submission.validation.js";
 import dotenv from "dotenv";
 import axios from "axios";
+import { query } from "express";
 
 dotenv.config({
   path: "../../.env",
@@ -94,6 +96,7 @@ const submitCode = asyncHandler(async (req, res) => {
   const jobToken = response.data.token;
   const submissionData = {
     userId: req.user._id,
+    username: req.user.username,
     ...validatedData.data,
     token: jobToken,
     stdin: req.body?.stdin || "",
@@ -206,6 +209,7 @@ const getSubmissions = asyncHandler(async (req, res) => {
 
   const submissions = await submissionModel
     .find({ userId: req.user?._id })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -221,4 +225,105 @@ const getSubmissions = asyncHandler(async (req, res) => {
     .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submissions));
 });
 
-export { submitCode, getResult, getSubmissions };
+const getAnalyticsSubmissions = asyncHandler(async (req, res) => {
+  const { page, count } = req.query;
+  const parsedPage = parseInt(page, 10);
+  const parsedCount = parseInt(count, 10);
+
+  if (isNaN(parsedPage) || isNaN(parsedCount)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+
+  let skip = parsedPage - 1;
+  const limit = parsedCount;
+
+  if (skip < 0 || limit <= 0 || limit > 100) {
+    skip = 0;
+  }
+
+  skip = skip * limit;
+
+  const queryData = {};
+  if (req.user.role != "admin") {
+    queryData.username = req.user.username;
+  }
+
+  const submissions = await submissionModel
+    .find(queryData)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  if (!submissions) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submissions));
+});
+
+const getAnalytics = asyncHandler(async (req, res) => {
+  const queryData = {};
+  if (req.user.role != "admin") {
+    queryData.username = req.user?.username;
+  } else if (req.body?.username) {
+    queryData.userId = req.body?.user;
+  }
+
+  const response = await submissionModel.find(queryData);
+  if (!response) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
+  const languageData = {
+    50: 0,
+    54: 0,
+    62: 0,
+    63: 0,
+    71: 0,
+  };
+  const verdictData = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+    6: 0,
+    7: 0,
+  };
+
+  for (const item of response) {
+    languageData[item.languageId]++;
+    if (parseInt(item.statusId, 10) >= 7) {
+      verdictData[7]++;
+    } else {
+      verdictData[item.statusId]++;
+    }
+  }
+
+  const responseData = {
+    language: {
+      ...Object.fromEntries(
+        Object.entries(languageData).filter(([key, value]) => value != 0)
+      ),
+    },
+    verdict: {
+      ...verdictData,
+    },
+  };
+
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, responseData));
+});
+export {
+  submitCode,
+  getResult,
+  getSubmissions,
+  getAnalytics,
+  getAnalyticsSubmissions,
+};
