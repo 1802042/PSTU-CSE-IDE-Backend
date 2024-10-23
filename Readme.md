@@ -103,14 +103,14 @@ The server should now be running on `http://localhost:PORT`, where `PORT` is def
 
 ### Authentication Routes
 
-- **POST** `api/v1/users/register`: Registers a new user.
-- **POST** `api/v1/users/login`: Logs in a user and returns access and refresh tokens.
-- **GET** `api/v1/users/logout`: Logs out a user by invalidating refresh tokens.
+- **POST** `/api/v1/users/register`: Registers a new user.
+- **POST** `/api/v1/users/login`: Logs in a user and returns access and refresh tokens.
+- **GET** `/api/v1/users/logout`: Logs out a user by invalidating refresh tokens.
 
 ### Code Submission Routes
 
 - **POST** `/api/v1/submissions/submit`: Submits code in any supported language and runs it against test cases.
-- **POST** `api/v1/submissions/result/:token`: Runs the submitted code with a custom input file.
+- **POST** `/api/v1/submissions/result/:token`: Runs the submitted code with a custom input file.
 
 This section can be expanded with detailed request/response examples.
 
