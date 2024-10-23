@@ -13,7 +13,7 @@ This repository contains the backend code for the **PSTU CSE IDE** platform. It 
 - **Code Submission**: Supports multiple languages (C/C++, Java, Python, JavaScript).
 - **Code Execution**: Runs code against test case.
 - **Sandboxed Code Execution**: All code execution is securely sandboxed in the jude0 engine.
-- **Execution Analytics**: Provides performance metrics and analysis for code submissions.
+- **Execution Analytics**: Provides analysis for code submissions.
 
 ---
 
@@ -99,7 +99,7 @@ The server should now be running on `http://localhost:PORT`, where `PORT` is def
 
 ## API Documentation
 
-**Suggestion**: Include a section detailing API routes, methods, and payloads. You can use tools like Postman to auto-generate API documentation or manually include API examples like:
+[API Documentation](https://documenter.getpostman.com/view/37232184/2sAY4rEjvM)
 
 ### Authentication Routes
 
