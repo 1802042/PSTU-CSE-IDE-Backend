@@ -6,7 +6,6 @@ import { uploadOnCloudinary } from "../utils/cloudinaryUpload.js";
 import { userModel } from "../models/user.model.js";
 import userValidationSchema from "../validation/user.validation.js";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
-import sendVerificationEmail from "../utils/sendVerificationEmail.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import fs from "fs";
 import jwt from "jsonwebtoken";
@@ -230,7 +229,7 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, {
         user: updatedUser,
-        refreshToken,
+        accessToken,
       })
     );
 });
@@ -356,6 +355,11 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (!isPasswordCorrect) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
+
+  if (!req.flag) {
+    throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+  }
+
   user.password = validatedNewPassword.data.password;
   await user.save({ validateBeforeSave: false });
   return res
