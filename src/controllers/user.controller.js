@@ -321,21 +321,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const oldPassword = req.body?.oldPassword;
+  const newPassword = req.body?.newPassword;
   if (!oldPassword || !newPassword) {
     throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
   }
-  const passwordValidationSchema = userValidationSchema.omit({
-    username: true,
-    fullName: true,
-    email: true,
+
+  const passwordValidationSchema = userValidationSchema.pick({
+    password: true,
   });
 
   const validatedOldPassword = passwordValidationSchema.safeParse({
     password: oldPassword,
   });
 
-  if (!validatedOldPassword) {
+  if (!validatedOldPassword.success) {
     throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
   }
 
@@ -343,15 +343,21 @@ const resetPassword = asyncHandler(async (req, res) => {
     password: newPassword,
   });
 
-  if (!validatedNewPassword) {
+  if (!validatedNewPassword.success) {
     throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
   }
 
   const userID = req.user?._id;
   const user = await userModel.findById(userID);
+
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
   const isPasswordCorrect = await user.isPasswordCorrect(
     validatedOldPassword.data.password
   );
+
   if (!isPasswordCorrect) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
   }
@@ -360,7 +366,8 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
   }
 
-  user.password = validatedNewPassword.data.password;
+  user.password = validatedNewPassword?.data?.password;
+
   await user.save({ validateBeforeSave: false });
   return res
     .status(StatusCodes.NO_CONTENT)

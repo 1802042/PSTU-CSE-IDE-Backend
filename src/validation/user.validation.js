@@ -25,7 +25,7 @@ const userValidationSchema = z.object({
       z.string().email({ message: "Invalid email address" })
     )
     .transform((val) => val.toLowerCase()),
-  password: z.string().min(1, { message: "password is required" }),
+  password: z.string().min(8, { message: "password is required" }),
   fullName: z.preprocess(
     (val) => (typeof val === "string" ? val.trim() : val),
     z
