@@ -7,6 +7,7 @@ import {
   resetPassword,
   getCurrentUser,
   emailVerification,
+  resetAvatar,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import {
@@ -27,6 +28,14 @@ router.route("/refresh-token").get(verifyRefreshToken, refreshAccessToken);
 // secured routes
 router.route("/logout").get(verifyAccessToken, logoutUser);
 router.route("/reset-password").post(verifyAccessToken, resetPassword);
+router
+  .route("/reset-avatar")
+  .post(
+    verifyAccessToken,
+    upload.single("avatar"),
+    resetAvatar,
+    multerErrorHandler
+  );
 router.route("/user").get(verifyAccessToken, getCurrentUser);
 
 export default router;

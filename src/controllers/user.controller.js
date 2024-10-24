@@ -109,6 +109,45 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 });
 
+const resetAvatar = asyncHandler(async (req, res) => {
+  const localFileLocation = req.file?.path;
+
+  if (!localFileLocation) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
+  }
+
+  const avatarUrl = await uploadOnCloudinary(localFileLocation);
+
+  if (!avatarUrl) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  const updateResult = await userModel.updateOne(
+    { _id: req.user?._id },
+    {
+      $set: {
+        avatarUrl,
+      },
+    }
+  );
+
+  if (updateResult.nModified == 0) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  return res
+    .status(StatusCodes.CREATED)
+    .json(
+      new ApiResponse(StatusCodes.CREATED, ReasonPhrases.CREATED, { avatarUrl })
+    );
+});
+
 const loginUser = asyncHandler(async (req, res) => {
   // get user details from req.body ✅
   // validate details ✅
@@ -191,7 +230,6 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, {
         user: updatedUser,
-        accessToken,
         refreshToken,
       })
     );
@@ -262,7 +300,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     };
 
     const responseData = {
-      ...req.user?._doc,
+      user: {
+        ...req.user?._doc,
+      },
       accessToken: newAccessToken,
     };
     return res
@@ -309,13 +349,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 
   const userID = req.user?._id;
-  if (!userID) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST);
-  }
   const user = await userModel.findById(userID);
-  if (!user) {
-    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-  }
   const isPasswordCorrect = await user.isPasswordCorrect(
     validatedOldPassword.data.password
   );
@@ -380,4 +414,5 @@ export {
   resetPassword,
   getCurrentUser,
   emailVerification,
+  resetAvatar,
 };
