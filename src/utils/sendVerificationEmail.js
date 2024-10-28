@@ -17,7 +17,7 @@ const oAuth2Client = new google.auth.OAuth2(
 
 const sendVerificationEmail = async (email) => {
   try {
-    console.log(`before access token`);
+    // console.log(`before access token`);
     oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
     const accessToken = await oAuth2Client.getAccessToken();
     console.log(`access token : ${accessToken}`);
@@ -49,7 +49,7 @@ const sendVerificationEmail = async (email) => {
       
       Welcome to KnightShade IDE! We're thrilled to have you on board. To complete your registration and get started, please verify your email address by clicking the link below:
       
-      http://localhost:8000/api/v1/users/verify-email/${token} 
+      ${process.env.ORIGIN}/api/v1/users/verify-email/${token} 
       
       This link will expire in 24 hours, so be sure to verify your email as soon as possible. If you did not create an account with us, please disregard this email.
       
