@@ -15,11 +15,12 @@ const oAuth2Client = new google.auth.OAuth2(
   process.env.REDIRECT_URI
 );
 
-oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
-
 const sendVerificationEmail = async (email) => {
   try {
+    console.log(`before access token`);
+    oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
     const accessToken = await oAuth2Client.getAccessToken();
+    console.log(`access token : ${accessToken}`);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",

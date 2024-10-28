@@ -225,8 +225,13 @@ const getSubmissions = asyncHandler(async (req, res) => {
     .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submissions));
 });
 
-const getAnalyticsSubmissions = asyncHandler(async (req, res) => {
-  const { page, count } = req.query;
+const getAnalytics = asyncHandler(async (req, res) => {
+  if (req.user.role != "admin") {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+  }
+
+  const { page, count, username, order, languageId, statusId } = req.query;
+
   const parsedPage = parseInt(page, 10);
   const parsedCount = parseInt(count, 10);
 
@@ -244,13 +249,23 @@ const getAnalyticsSubmissions = asyncHandler(async (req, res) => {
   skip = skip * limit;
 
   const queryData = {};
-  if (req.user.role != "admin") {
-    queryData.username = req.user.username;
+  if (username) {
+    queryData.username = username;
+  }
+  if (statusId) {
+    queryData.statusId = statusId;
+  }
+
+  if (languageId) {
+    const parsedLanguageId = parseInt(languageId, 10);
+    if (!isNaN(parsedLanguageId)) {
+      queryData.languageId = parsedLanguageId;
+    }
   }
 
   const submissions = await submissionModel
     .find(queryData)
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: order == "true" ? 1 : -1 })
     .skip(skip)
     .limit(limit);
 
@@ -259,24 +274,6 @@ const getAnalyticsSubmissions = asyncHandler(async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       ReasonPhrases.INTERNAL_SERVER_ERROR
     );
-  }
-
-  return res
-    .status(StatusCodes.OK)
-    .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, submissions));
-});
-
-const getAnalytics = asyncHandler(async (req, res) => {
-  const queryData = {};
-  if (req.user.role != "admin") {
-    queryData.username = req.user?.username;
-  } else if (req.body?.username) {
-    queryData.userId = req.body?.user;
-  }
-
-  const response = await submissionModel.find(queryData);
-  if (!response) {
-    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
   }
 
   const languageData = {
@@ -296,7 +293,7 @@ const getAnalytics = asyncHandler(async (req, res) => {
     7: 0,
   };
 
-  for (const item of response) {
+  for (const item of submissions) {
     languageData[item.languageId]++;
     if (parseInt(item.statusId, 10) >= 7) {
       verdictData[7]++;
@@ -314,16 +311,14 @@ const getAnalytics = asyncHandler(async (req, res) => {
     verdict: {
       ...verdictData,
     },
+    submissions: {
+      ...submissions,
+    },
   };
 
   return res
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, ReasonPhrases.OK, responseData));
 });
-export {
-  submitCode,
-  getResult,
-  getSubmissions,
-  getAnalytics,
-  getAnalyticsSubmissions,
-};
+
+export { submitCode, getResult, getSubmissions, getAnalytics };
